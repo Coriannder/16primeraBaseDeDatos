@@ -1,0 +1,78 @@
+<script>
+    const socket = io()
+
+    /* Agrego evento en boton guardar para cargar producto nuevo */
+    let botonGuardar = document.getElementById('btnGuardar')
+        botonGuardar.addEventListener('click', (e)=>{
+            /* funcion para guardar producto nuevo */
+            e.preventDefault()
+            if(document.getElementById('title').value !== ""
+                && document.getElementById('price').value !== ""
+                && document.getElementById('thumbnail').value !== ""){
+
+                    newProduct = {
+                    title: document.getElementById('title').value,
+                    price: document.getElementById('price').value,
+                    thumbnail: document.getElementById('thumbnail').value,
+                    }
+                    console.log(newProduct)
+
+                    /* Envio producto nuevo al servidor*/
+                    socket.emit('newProduct', newProduct)
+
+                    document.getElementById('title').value = ''
+                    document.getElementById('price').value = ''
+                    document.getElementById('thumbnail').value = ''
+                }
+        })
+
+    /* Escucho la lista de productos */
+    socket.on('products', res => {
+        let str = ''
+        console.log(`res ${res}`)
+        res.forEach(product => {
+                str += (`<tr>
+                    <th scope="row">${product.id}</th>
+                    <td>${product.title}</td>
+                    <td>$ ${ product.price}</td>
+                    <td><img src="${product.thumbnail}" alt="imagen de ${product.title} " style="height: 20px;"></td>
+                </tr>`)
+            })
+
+        document.getElementById('tbody').innerHTML = str
+    });
+
+    /* Escucho los mensajes del chat */
+    socket.on("messages", chat => {
+        const html = chat.map(message => {
+            return (`
+            <p>
+                <strong>${message.author}</strong> <span>[${message.date}]</span> :  <i>${message.text}</i>
+            </p>
+            `);
+        }).join(" ")
+        document.getElementById("chatMessages").innerHTML = html;
+        document.getElementById("newMessage").focus()
+         document.getElementById("newMessage").value = ""
+    })
+
+    /* Funcion para agregar mensaje al chat */
+    const addMessage = () => {
+        const author = document.getElementById("userEmail").value
+        const text =  document.getElementById("newMessage").value
+        const today = new Date();
+        if(author === ''){
+            document.getElementById("userEmail").placeholder = 'Debe ingresar su email'
+        }else{
+            const now = today.toLocaleString();
+            const message = {
+                    author: author,
+                    date: now,
+                    text: text
+            };
+            /* Envio nuevo mensaje al chat */
+            socket.emit('newMessage', message);
+            console.log(message)
+        }}
+
+</script>
